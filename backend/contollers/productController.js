@@ -76,3 +76,67 @@ export async function deleteProduct(req,res) {  //admin kenek nm withri delete k
         error : err
     })
 }}
+
+
+export async function updateProduct(req,res) {  //admin kenek nm withri delete krnn plwn
+
+    if(!isAdmin(req)){    
+        res.status(403).json({
+            message: "You are not authorized to add a product" 
+        })
+        return
+    }
+
+    const productId = req.params.productId   //productId ek hoygnno
+    const updatingData = req.body  //update krnn on ew body eke ewno post req ekk widiyt
+
+    try{
+        await Product.updateOne(
+            {productId : productId} ,     // mekedi wenne api para metars haraha ewl thiyen productId ek withri update krnne
+            updatingData              //update krnn on data
+        )
+        res.json({
+            message : "product update succeessfully"
+        })
+        }catch(err){
+        res.status(500).json({
+            message : "Internal server error",
+            error : err
+        })
+}}
+
+export async function getProductById(req,res) {  //admin kenek nm withri delete krnn plwn
+
+    const productId = req.params.productId;   //para metar wlin en productid ek gnno
+
+    try{
+        const product = await Product.findOne(   //e proctid ekt adl details db ekn gnno
+            {productId:productId}
+        )
+
+        if(product ==null){
+            res.status(404).json({         //ehm product ekk db eke ndd blno.nethtn mek penno
+              message : "product not found"
+            })
+            return
+        }
+        if(product.isAvailable){        //product ek availabled kiyl blno
+            res.json(product)             //product ek availabled nm e product eke details front ekt ywno
+        }else{                 // product ek available nththn saha blno den meya admin kenekd kiyl
+            if(!isAdmin(req)){
+                res.status(404).json({      
+                    message : "product not found"  // admin nown kenek productid ekn produt blnn try kloth eyt mek penn on
+                })
+                return
+            }else{         //ey admin kenek nm eyt prodct ek peno
+                res.json(product);
+            }
+        }
+
+
+    }catch(err){
+    res.status(500).json({
+        message : "Internal server error",
+        error : err
+    })
+}}
