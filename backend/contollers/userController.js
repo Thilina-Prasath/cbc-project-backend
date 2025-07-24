@@ -59,7 +59,9 @@ export function loginUser(req, res) {
                 },
                 process.env.JWT_KEY
             );
-            res.json({ message: "User logged in successfully", token });
+            res.json({ message: "User logged in successfully", 
+                       token : token,
+                        role : user.role});  //api gnn on dewl role ek,message saha token ek
         } else {
             res.status(400).json({ message: "Password is incorrect" });
         }

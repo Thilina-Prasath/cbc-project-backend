@@ -99,3 +99,29 @@ export async function createOrder(req,res){
     
     }
 }
+
+export async function getOrders(req, res) {
+    // Fixed: Removed semicolon after if condition
+    if(req.user == null){
+        res.status(401).json({
+            message: "You are not logged in"
+        })
+        return
+    }
+    
+    try {
+        // Fixed: Changed assignment (=) to comparison (===)
+        if(req.user.role === "admin"){
+            const orders = await Order.find()
+            res.json(orders);
+        } else {
+            const orders = await Order.find({email: req.user.email})
+            res.json(orders);
+        }
+    } catch(err){
+        res.status(500).json({
+            message: "Failed to get orders",
+            error: err
+        })
+    }
+}
