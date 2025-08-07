@@ -1,5 +1,5 @@
 import express from 'express';
-import { createUser, loginUser, loginWithGoogle, resetPassword, sendOTP } from '../contollers/userController.js';
+import { createUser, getUser, loginUser, loginWithGoogle, resetPassword, sendOTP } from '../contollers/userController.js';
 
 const userRouter = express.Router();
 
@@ -8,5 +8,6 @@ userRouter.post("/login", loginUser)  //localhost:3000/user/login kiyl request e
 userRouter.post("/login/google",loginWithGoogle)
 userRouter.post("/send-otp",sendOTP) //localhost:3000/user/send-otp kiyl request ekk
 userRouter.post("/reset-password",resetPassword)
+userRouter.get("/",getUser)
 
 export default userRouter;

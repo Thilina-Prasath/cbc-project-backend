@@ -248,8 +248,28 @@ export async function resetPassword(req,res){
 }
 
 
+// dent log wel inn user gnn
+export function getUser(req,res){
+    if(req.user == null){
+        res.status(403).json({
+            message: "You are not authorized to view user details"
+        })
+        return
+    }else{                       // req.user == null mehem nththn en userge okkm thorathuru ywno
+        res.json({
+            ...req.user
+        })
+    }
+}
+
+
 // Admin check (updated to allow roles starting with "admin")
-export function isAdmin(req) {
-    if (!req.user) return false;
-    return req.user.role?.startsWith("admin");
+export function isAdmin(req){
+    if(req.user == null){
+        return false
+    }
+    if(req.user.role != "admin"){
+        return false
+    }
+    return true
 }

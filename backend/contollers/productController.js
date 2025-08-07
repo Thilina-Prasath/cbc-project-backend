@@ -140,3 +140,22 @@ export async function getProductById(req,res) {  //admin kenek nm withri delete 
         error : err
     })
 }}
+
+export async function searchProducts(req,res){
+    const searchQuery = req.params.query
+    try{
+        const products = await Product.find({
+            $or:[
+                {name :  {$regex : searchQuery, $options : "i"}},           // $options : "i" capital simple blnn ep kiyl kiynne
+                {altNames : {$elemMatch : {$regex : searchQuery, $options : "i"}}}      // $elemMatch element eken element cheak krnn kiyl kiynne
+            ],
+            isAvailable : true
+        })
+        res.json(products)
+    }catch(err){
+        res.status(500).json({
+            message : "Internal server error",
+            error : err
+        })
+    }
+}

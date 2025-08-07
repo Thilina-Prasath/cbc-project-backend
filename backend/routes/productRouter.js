@@ -1,5 +1,5 @@
 import express from 'express';
-import { deleteProduct,getProductById,getProducts, SaveProducts, updateProduct } from '../contollers/productController.js';
+import { deleteProduct,getProductById,getProducts, SaveProducts, searchProducts, updateProduct } from '../contollers/productController.js';
 
 const productRouter = express.Router();
 
@@ -12,5 +12,8 @@ productRouter.delete("/:productId",deleteProduct)      // thith deken kinne dele
 productRouter.put("/:productId",updateProduct)
 
 productRouter.get("/:productId",getProductById)
+
+productRouter.get("/search/:query",searchProducts)
+
 
 export default productRouter;
