@@ -6,7 +6,6 @@ import axios from "axios";
 import nodemailer from "nodemailer";
 import OTP from "../models/otp.js";
 
-
 dotenv.config();
 
 // Create user
@@ -37,8 +36,11 @@ export function createUser(req, res) {
 
     user.save().then(() => {
         res.json({ message: "User created successfully" });
-    }).catch(() => {
-        res.json({ message: "Error creating user" });
+    }).catch((error) => {
+        res.status(500).json({ 
+            message: "Error creating user",
+            error: error.message 
+        });
     });
 }
 
@@ -63,213 +65,271 @@ export function loginUser(req, res) {
                 },
                 process.env.JWT_KEY
             );
-            res.json({ message: "User logged in successfully", 
-                       token : token,
-                        role : user.role});  //api gnn on dewl role ek,message saha token ek
+            res.json({ 
+                message: "User logged in successfully", 
+                token: token,
+                role: user.role
+            });
         } else {
             res.status(400).json({ message: "Password is incorrect" });
         }
-    });
-}
-
-export async function loginWithGoogle(req,res) {    //access token ek awm ek validate krl kiywgnn thmi mek use krnne
-    const token = req.body.accessToken;           //axios cl ghnn on nis thmi async dnne
-    if(token == null){
-        res.status(400).json({
-            message:"Access token is required"
+    }).catch((error) => {
+        res.status(500).json({
+            message: "Login failed",
+            error: error.message
         });
-        return;
-    }
-    const response = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
-        headers: {
-            Authorization: `Bearer ${token}`
-        }
-    })
-    console.log(response.data);
-    
-    const user = await User.findOne({ 
-        email: response.data.email 
     });
-    if(user == null){
-        const newUser = new User({
-            email: response.data.email,
-            firstName: response.data.given_name,
-            lastName: response.data.family_name,
-            password:"googleUser",
-            img: response.data.picture
+}
+
+export async function loginWithGoogle(req, res) {
+    try {
+        const token = req.body.accessToken;
+        if (token == null) {
+            res.status(400).json({
+                message: "Access token is required"
+            });
+            return;
+        }
+
+        const response = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
+            headers: {
+                Authorization: `Bearer ${token}`
             }
-        )
-        await newUser.save();
-        const token = jwt.sign(
-            {
-                email: newUser.email,
-                firstName: newUser.firstName,
-                lastName: newUser.lastName,
-                role: newUser.role,
-                img: newUser.img
-            },
-            process.env.JWT_KEY
-        ) 
-        res.json({
-            message: "Login successful",
-            token: token,
-            role: newUser.role
-        })    
-    }else{
+        });
 
-        const token = jwt.sign(
-            {
-                email: user.email,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                role: user.role,
-                img: user.img
-            },
-            process.env.JWT_KEY
-        )
-        res.json({
-            message: "Login successful",
-            token: token,
-            role: user.role
-        })
+        console.log(response.data);
+        
+        const user = await User.findOne({ 
+            email: response.data.email 
+        });
 
+        if (user == null) {
+            const newUser = new User({
+                email: response.data.email,
+                firstName: response.data.given_name,
+                lastName: response.data.family_name,
+                password: "googleUser",
+                img: response.data.picture
+            });
+
+            await newUser.save();
+
+            const jwtToken = jwt.sign(
+                {
+                    email: newUser.email,
+                    firstName: newUser.firstName,
+                    lastName: newUser.lastName,
+                    role: newUser.role,
+                    img: newUser.img
+                },
+                process.env.JWT_KEY
+            );
+
+            res.json({
+                message: "Login successful",
+                token: jwtToken,
+                role: newUser.role
+            });
+        } else {
+            const jwtToken = jwt.sign(
+                {
+                    email: user.email,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    role: user.role,
+                    img: user.img
+                },
+                process.env.JWT_KEY
+            );
+
+            res.json({
+                message: "Login successful",
+                token: jwtToken,
+                role: user.role
+            });
+        }
+    } catch (error) {
+        res.status(500).json({
+            message: "Google login failed",
+            error: error.message
+        });
     }
 }
 
-// send otp 
-
+// Fixed: createTransport instead of createTransporter
 const transport = nodemailer.createTransport({
     service: 'gmail',
-    host : 'smtp.gmail.com',
+    host: 'smtp.gmail.com',
     port: 587,
     secure: false,
     auth: {
         user: process.env.GMAIL_USER,
         pass: process.env.GMAIL_PASS
     }
-})
+});
 
-export async function sendOTP(req,res){
-    //javy zfzy dwsd rmbg
-    const randomOTP = Math.floor(100000 + Math.random() * 900000);         //randamotp ekk generete krno
-    const email = req.body.email;
-    if(email == null){
-        res.status(400).json({
-            message: "Email is required"
+export async function sendOTP(req, res) {
+    try {
+        const randomOTP = Math.floor(100000 + Math.random() * 900000);
+        const email = req.body.email;
+
+        if (email == null) {
+            res.status(400).json({
+                message: "Email is required"
+            });
+            return;
+        }
+
+        // Check if user exists
+        const user = await User.findOne({
+            email: email
         });
-        return;
-    
-    }
-    // check if user exists
-    const user = await User.findOne({
-        email : email
-    })
-    if(user == null){
-        res.status(404).json({
-            message:"User not found"
-        })
-    }
 
-    //delete all otps
-    await OTP.deleteMany({
-        email: email
-    })
+        if (user == null) {
+            res.status(404).json({
+                message: "User not found"
+            });
+            return;
+        }
 
-    const message = {
-        from : "thilinaprasath32@gmail.com",
-        to: email,
-        subject : "Resetting password for crystal beauty clear.",
-        text : "This your password reset OTP : " + randomOTP
-    }
+        // Delete all existing OTPs for this email
+        await OTP.deleteMany({
+            email: email
+        });
 
-    const otp = new OTP({
-        email : email,
-        otp : randomOTP
-    })
-    await otp.save()
+        const message = {
+            from: process.env.GMAIL_USER, // Use environment variable
+            to: email,
+            subject: "Resetting password for Crystal Beauty Clear",
+            text: "This is your password reset OTP: " + randomOTP
+        };
 
-    transport.sendMail(message,(error,info)=>{
-            if(error){
+        const otp = new OTP({
+            email: email,
+            otp: randomOTP
+        });
+
+        await otp.save();
+
+        transport.sendMail(message, (error, info) => {
+            if (error) {
+                console.error("Email sending error:", error);
                 res.status(500).json({
                     message: "Failed to send OTP",
-                    error: error
+                    error: error.message
                 });
-            }else{
+            } else {
                 res.json({
-                    message: "OTP sent successfully",
-                    otp: randomOTP
+                    message: "OTP sent successfully"
+                    // Don't send OTP in response for security
                 });
             }
-
-            
-        }
-    )
-}
-
-export async function resetPassword(req,res){
-    const otp  = req.body.otp
-    const email = req.body.email
-    const newPassword = req.body.newPassword
-    console.log(otp)
-    const response = await OTP.findOne({
-        email : email
-    })
-    
-    if(response==null){
+        });
+    } catch (error) {
         res.status(500).json({
-            message : "No otp requests found please try again"
-        })
-        return
+            message: "Failed to send OTP",
+            error: error.message
+        });
     }
-    if(otp == response.otp){
-        await OTP.deleteMany(
-            {
-                email: email
-            }
-        )
-        console.log(newPassword)
-
-        const hashedPassword = bcrypt.hashSync(newPassword, 10)      //create new password
-        const response2 = await User.updateOne(
-            {email : email},       //email eke inn user update wenn on
-            {
-                password : hashedPassword
-            }
-        )
-        res.json({
-            message : "password has been reset successfully"
-        })
-    }else{
-        res.status(403).json({
-            meassage : "OTPs are not matching!"
-        })
-    }
-
 }
 
+export async function resetPassword(req, res) {
+    try {
+        const otp = req.body.otp;
+        const email = req.body.email;
+        const newPassword = req.body.newPassword;
 
-// dent log wel inn user gnn
-export function getUser(req,res){
-    if(req.user == null){
+        console.log("Received OTP:", otp);
+
+        const otpRecord = await OTP.findOne({
+            email: email
+        });
+        
+        if (otpRecord == null) {
+            res.status(404).json({
+                message: "No OTP requests found. Please try again"
+            });
+            return;
+        }
+
+        if (otp == otpRecord.otp) {
+            // Delete OTP after successful verification
+            await OTP.deleteMany({
+                email: email
+            });
+
+            console.log("New password:", newPassword);
+
+            const hashedPassword = bcrypt.hashSync(newPassword, 10);
+            
+            await User.updateOne(
+                { email: email },
+                { password: hashedPassword }
+            );
+
+            res.json({
+                message: "Password has been reset successfully"
+            });
+        } else {
+            res.status(403).json({
+                message: "OTPs do not match!" // Fixed typo
+            });
+        }
+    } catch (error) {
+        res.status(500).json({
+            message: "Failed to reset password",
+            error: error.message
+        });
+    }
+}
+
+// Get logged-in user details
+export function getUser(req, res) {
+    if (req.user == null) {
         res.status(403).json({
             message: "You are not authorized to view user details"
-        })
-        return
-    }else{                       // req.user == null mehem nththn en userge okkm thorathuru ywno
+        });
+        return;
+    } else {
         res.json({
             ...req.user
-        })
+        });
     }
 }
 
+// Get all customers
+export async function getCustomers(req, res) {
+    try {
+        // Check if user is admin
+        if (!req.user || req.user.role !== "admin") {
+            return res.status(403).json({
+                message: "You are not authorized to view customers"
+            });
+        }
 
-// Admin check (updated to allow roles starting with "admin")
-export function isAdmin(req){
-    if(req.user == null){
-        return false
+        // Find all users who are customers (not admins)
+        const customers = await User.find({ 
+            role: { $ne: "admin" } // Not equal to admin
+        }).select('-password'); // Exclude password field
+
+        console.log(`Found ${customers.length} customers`);
+        res.json(customers);
+    } catch (error) {
+        console.error("Error fetching customers:", error);
+        res.status(500).json({
+            message: "Internal server error",
+            error: error.message
+        });
     }
-    if(req.user.role != "admin"){
-        return false
+}
+
+// Admin check helper function
+export function isAdmin(req) {
+    if (req.user == null) {
+        return false;
     }
-    return true
+    if (req.user.role != "admin") {
+        return false;
+    }
+    return true;
 }
