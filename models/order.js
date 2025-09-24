@@ -1,82 +1,84 @@
 import mongoose from "mongoose";
 
 const orderSchema = mongoose.Schema({
-    orderId :{
-        type : String,
-        required : true,
-        unique : true
+    orderId: {
+        type: String,
+        required: true,
+        unique: true
     },
-    email : {
-        type : String,
-        required : true
+    email: {
+        type: String,
+        required: true
     },
-    name : {
-        type : String,
-        required : true
+    name: {
+        type: String,
+        required: true
     },
-    phone : {
-        type : String,
-        required : true
+    phone: {
+        type: String,
+        required: true
     },
-    address : {
-        type : String,
-        required : true
+    address: {
+        type: String,
+        required: true
     },
-    status : {
-        type : String,
-        required : true,
-        default : "pending"
+    status: {
+        type: String,
+        required: true,
+        default: "pending"
     },
-    labelledTotal : {
-        type : Number,
-        required : true,
+    labelledTotal: {
+        type: Number,
+        required: true,
     },
-    total : {
-        type : Number,
-        required : true
+    total: {
+        type: Number,
+        required: true
     },
-    Products : [
+    // Fixed: Changed from 'Products' to 'products' (lowercase)
+    products: [
         {
-            ProductInfo : {
-                productId : {
-                    type : String,
-                    required : true
+            // Fixed: Changed from 'ProductInfo' to 'productInfo' (camelCase)
+            productInfo: {
+                productId: {
+                    type: String,
+                    required: true
                 },
-                name : {
-                    type : String,
-                    required : true
+                name: {
+                    type: String,
+                    required: true
                 },
-                altNames : [{
-                    type : String,
+                altNames: [{
+                    type: String,
                 }],
-                description : {
-                    type : String,
-                    required : true
+                description: {
+                    type: String,
+                    required: true
                 },
-                images : [{
-                    type : String,
+                images: [{
+                    type: String,
                 }],
-                labelledPrice : {
-                    type : Number,
-                    required : true
+                labelledPrice: {
+                    type: Number,
+                    required: true
                 },
-                price : {
-                    type : Number,
-                    required : true
+                price: {
+                    type: Number,
+                    required: true
                 },
             },
-            quantity : {
-                type : Number,
-                required : true
+            quantity: {
+                type: Number,
+                required: true
             }
         }
     ],
-    date : {
-        type : Date,
-        default : Date.now
+    date: {
+        type: Date,
+        default: Date.now
     }
-})
+});
 
-const Order = mongoose.model("orders",orderSchema)
+const Order = mongoose.model("orders", orderSchema);
 
 export default Order;
