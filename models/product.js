@@ -2,42 +2,63 @@ import mongoose from "mongoose";
 
 const productSchema = mongoose.Schema(
     {
-        productId : {
-            type : String,
-            required : true, // aniwaryen productId ekk thiyenn on kiyl kiynne
-            unique : true       // productid thiyenn plwn eki dekk thiyenn ba kiyl kiynne
+        productId: {
+            type: String,
+            required: true, // aniwaryen productId ekk thiyenn on kiyl kiynne
+            unique: true       // productid thiyenn plwn eki dekk thiyenn ba kiyl kiynne
         },
-        name : {
-            type : String,
-            required : true  
+        name: {
+            type: String,
+            required: true
         },
-        altNames : [
-            {type : String}
+        altNames: [
+            { type: String }
         ],
-        description : {
-            type : String,
-            required : true
+        description: {
+            type: String,
+            required: true
         },
-        images : [
-            {type : String}
+        images: [
+            { type: String }
         ],
-        labelledPrice : {
-            type : String,
-            required : true
+        labelledPrice: {
+            type: String,
+            required: true
         },
-        price : {
-            type : String,
-            required : true
+        price: {
+            type: String,
+            required: true
         },
-        stock : {
-            type : String,
-            required : true
+        stock: {
+            type: String,
+            required: true
         },
-        isAvailable : {
-            type : Boolean,
-            required : true,
-            default : true
+        isAvailable: {
+            type: Boolean,
+            required: true,
+            default: true
         },
+        category: {
+            type: String,
+            required: true,
+            default: "uncategorized"
+        },
+        subCategory: {
+            type: String,
+            required: true,
+            default: "General"
+        },
+        colors: [
+            { type: String }
+        ],
+        sizes: [
+            { type: String }
+        ],
+        barcode: {
+            type: String,
+            unique: true,
+            sparse: true
+        }
     }
 )
 

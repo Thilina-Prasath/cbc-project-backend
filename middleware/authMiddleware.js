@@ -24,8 +24,14 @@ const authMiddleware = async (req, res, next) => {
       return res.status(401).json({ message: 'No token provided' });
     }
 
+    const jwtSecret = process.env.JWT_SECRET || process.env.JWT_KEY;
+    if (!jwtSecret) {
+      console.error('JWT secret missing in .env');
+      return res.status(500).json({ message: 'Server config error' });
+    }
+
     // Verify the JWT token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, jwtSecret);
     console.log('Decoded token:', decoded);
     
     // Find user - your current token structure has email but no id

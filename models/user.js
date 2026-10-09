@@ -8,15 +8,15 @@ const userSchema = mongoose.Schema({
     },
     firstName : {
         type : String,
-        required : true,
+        required : false,
     },
     lastName : {
         type : String,
-        required : true,
+        required : false,
     },
     password : {
         type : String,
-        required : true,
+        required : false,  // google login krn user kenek password ekk nathuw save wenna puluwan nis mehema dno
     },
     role : {
         type : String,
@@ -32,7 +32,28 @@ const userSchema = mongoose.Schema({
         type : String,
         default : "https://avatar.iran.liara.run/public/6",
         required : false,
-    }
+    },
+    provider : {
+        type : String,
+        default : "email",  
+         
+    },
+    providerId : {
+        type : String,
+        required : false,
+         
+    },
+    isEmailVerified: {
+        type: Boolean,
+        default: false,
+    },
+    refreshToken: {
+        type: String,
+        required: false,  // delete user logout 
+    },
+    wishlist: [
+        { type: String } // save productId
+    ]
 })
 
 const User = mongoose.model("user", userSchema);

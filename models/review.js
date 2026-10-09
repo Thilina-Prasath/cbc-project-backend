@@ -6,6 +6,8 @@ const reviewSchema = new mongoose.Schema({
   email: { type: String, required: true },
   rating: { type: Number, min: 1, max: 5, required: true },
   comment: { type: String, required: true },
+  productId: { type: String, required: false }, 
+  images: [{ type: String }], 
   createdAt: { type: Date, default: Date.now }
 });
 

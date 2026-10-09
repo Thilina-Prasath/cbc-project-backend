@@ -1,3 +1,4 @@
+import Order from "../models/order.js";
 import Product from "../models/product.js";
 import { isAdmin } from "./userController.js";
 
@@ -27,31 +28,31 @@ export async function getProducts(req,res){
     }
 }
 
-export function SaveProducts(req,res) { 
+export async function SaveProducts(req,res) { 
 
     if(!isAdmin(req)){    // admin kenek d kiyl check krno
-        res.status(403).json({
+        return res.status(403).json({
             message: "You are not authorized to add a product" 
-        })
-        return
+        });
     }
     
-
-    const product = new Product (
-
-        req.body // product schema ek godk thiyen nis mehem dno. ethkot product schema ek thiye okkm dewl body eke thiyeno e dwl req ekk mgin gnno
-);
+    try {
+        const product = new Product(req.body);
         
-        product.save().then(() => {
-            res.json({
-                message : "Products saved successfully",
-            })
-        }). catch(()=>{
-            res.json({
-                message : "Error saving Products"
-            })
-        })
+        await product.save();
         
+        res.status(201).json({
+            message : "Product saved successfully",
+        });
+
+    } catch (err) {
+        console.error("Database Save Error: ", err); 
+        
+        res.status(400).json({
+            message : "Error saving Product",
+            error: err.message
+        });
+    }
 }
 
 
@@ -159,3 +160,36 @@ export async function searchProducts(req,res){
         })
     }
 }
+
+export async function getProductsByCategory(req,res){
+    try {
+        const categoryName = req.params.category;
+        
+        const products = await Product.find({ category: categoryName });
+        
+        res.json(products);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching products by category", error: error.message });
+    }
+}
+
+// Get product by Barcode
+export async function getProductByBarcode(req, res) {
+    try {
+        const barcode = req.params.barcode;
+        const product = await Product.findOne({ barcode: barcode });
+
+        if (!product) {
+            return res.status(404).json({ message: "Product not found for this barcode" });
+        }
+
+        if (Number(product.stock) <= 0 || !product.isAvailable) {
+            return res.status(400).json({ message: "Out of stock!" });
+        }
+
+        res.json(product);
+    } catch (error) {
+        res.status(500).json({ message: "Error scanning product", error: error.message });
+    }
+}
+

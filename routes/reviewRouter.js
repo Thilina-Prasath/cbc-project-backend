@@ -23,7 +23,7 @@ const requireAdmin = (req, res, next) => {
 // POST - Submit a review (authenticated users)
 router.post("/", requireAuth, async (req, res) => {
   try {
-    const { rating, comment } = req.body;
+    const { rating, comment, productId, images } = req.body;
 
     if (!rating || !comment) {
       return res.status(400).json({ message: "Rating and comment are required." });
@@ -39,6 +39,8 @@ router.post("/", requireAuth, async (req, res) => {
       email: req.user.email,
       rating: Number(rating),
       comment: comment.trim(),
+      productId: productId || null, 
+      images: images || [],        
     });
 
     const savedReview = await review.save();
@@ -46,6 +48,30 @@ router.post("/", requireAuth, async (req, res) => {
   } catch (err) {
     console.error("Review submission error:", err);
     res.status(500).json({ message: "Failed to submit review", error: err.message });
+  }
+});
+
+router.get("/product/:productId", async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const reviews = await Review.find({ productId: productId }).sort({ createdAt: -1 });
+    res.json(reviews);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch product reviews", error: err.message });
+  }
+});
+
+router.get("/featured", async (req, res) => {
+  try {
+    const reviews = await Review.find({
+      comment: { $exists: true, $ne: "" },
+      $or: [{ productId: { $exists: false } }, { productId: null }, { productId: "" }],
+    })
+      .sort({ createdAt: -1 })
+      .limit(20);
+    res.json(reviews);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch featured reviews", error: err.message });
   }
 });
 
